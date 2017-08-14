@@ -1,4 +1,3 @@
-#[macro_use]
 extern crate serde_json;
 
 use serde_json::Value;
@@ -25,15 +24,40 @@ fn parse_json_to_values(buffer: &str) -> Result<Value, String> {
     }
 }
 
-fn parse_values_to_cards(values: &Value) -> Result<Vec<Card>, String> {
+fn parse_values_to_cards(value: &Value) -> Result<Vec<Card>, String> {
     let cards = Vec::new();
-    match values {
-        Null => println!("found null"),
-        Bool => println!("found null"),
-        Number => println!("found null"),
-        String => println!("found null"),
-        Array => println!("found null"),
-        Object => println!("found null"),
+    match *value {
+        Value::Bool(ref b) => println!("found bool: {}", b),
+        Value::Number(ref n) => {
+            match n.as_i64() {
+                Some(num) => println!("found i64: {}", num),
+                None => match value.as_u64() {
+                    Some(num) => println!("found u64: {}", num),
+                    None => match value.as_f64() {
+                        Some(num) => println!("found f64: {}", num),
+                        None => println!("should be a number but isn't"),
+                    }
+                }
+            }
+        },
+        Value::String(ref s) => {
+            println!("found string: {}", s);
+        },
+        Value::Array(ref a) => {
+            println!("found array");
+            for (_, value) in a.iter().enumerate() {
+                println!("found array element, recuring");
+                parse_values_to_cards(value);
+            }
+        },
+        Value::Object(ref o) => {
+            println!("found array");
+            for (name, value) in o {
+                println!("found object: \"{}\", recursing", name);
+                parse_values_to_cards(value);
+            }
+        },
+        Value::Null => println!("found null"),
     }
     Ok(cards)
 }
@@ -45,17 +69,17 @@ fn main() {
             let json_as_value_result = parse_json_to_values(&json_as_string);
             match json_as_value_result {
                 Ok(json_as_value) => {
-                    let pretty_result = serde_json::to_string_pretty(&json_as_value);
-                    match pretty_result {
-                        Ok(v) => println!("Data is: {}", v),
-                        Err(e) => println!("Couldn't pretty print: {}", e),
-                    }
+//                    let pretty_result = serde_json::to_string_pretty(&json_as_value);
+//                    match pretty_result {
+//                        Ok(v) => println!("Data is: {}", v),
+//                        Err(e) => println!("Couldn't pretty print: {}", e),
+//                    }
                     let cards = parse_values_to_cards(&json_as_value);
                 }
                 Err(e) => println!("Couldn't parse file to Values: {}", e),
             }
         }
-        Err(e) => println!("Error: Coulding load file: {}", e),
+        Err(e) => println!("Error: Couldn't load file: {}", e),
     }
 }
 
