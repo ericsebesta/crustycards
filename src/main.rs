@@ -5,17 +5,54 @@ use std::io;
 use std::io::prelude::*;
 use std::fs::File;
 
+enum ClassEnum {
+    Neutral,
+    Druid,
+    Hunter,
+    Mage,
+    Paladin,
+    Priest,
+    Rogue,
+    Shaman,
+    Warlock,
+    Warrior,
+    Unknown,
+}
+
+enum RarityEnum {
+    Common,
+    Rare,
+    Epic,
+    Legendary,
+    Free,
+    Unknown,
+}
+
+enum TypeEnum {
+    Minion,
+    Hero,
+    Weapon,
+    Spell,
+    Unknown,
+}
+
+enum FactionEnum {
+    Alliance,
+    Horde,
+    Unknown,
+}
+
 struct Card {
     name: String,
     id: String,
-    playerClass: String,
+    playerClass: ClassEnum,
+    cardClass: ClassEnum,
+    rarity: RarityEnum,
+    theType: TypeEnum,
+    faction: FactionEnum,
     artist: String,
-    cardClass: String,
-    rarity: String,
     text: String,
     set: String,
-    theType: String,
-    faction: String,
     flavor: String,
     howToEarn: String,
     howToEarnGolden: String,
@@ -29,111 +66,184 @@ struct Card {
     overload: i64,
     spellDamage: i64,
     durability: i64,
-    
+
     collectible: bool,
     elite: bool,
-    
+
     json: String,
 }
 
 impl Card {
     fn internalize_json(&mut self, map: &serde_json::Map<String, Value>) {
         //ignored fields: collectionText (looks like a dupe of text which is rarely defined)
-        for(key, value) in map {
+        for (key, value) in map {
             match key.as_ref() {
                 "name" => {
                     match *value {
-                        Value::String(ref s) => {self.name = s.clone();},
+                        Value::String(ref s) => {
+                            self.name = s.clone();
+                        }
                         _ => println!("Should be string but isn't"),
                     }
                 }
                 "id" => {
                     match *value {
-                        Value::String(ref s) => {self.id = s.clone();},
+                        Value::String(ref s) => {
+                            self.id = s.clone();
+                        }
                         _ => println!("Should be string but isn't"),
                     }
                 }
                 "playerClass" => {
                     match *value {
-                        Value::String(ref s) => {self.playerClass = s.clone();},
-                        _ => println!("Should be string but isn't"),
-                    }
-                }
-                "artist" => {
-                    match *value {
-                        Value::String(ref s) => {self.artist = s.clone();},
+                        Value::String(ref s) => {
+                            match s.as_ref() {
+                                "NEUTRAL" => self.playerClass = ClassEnum::Neutral,
+                                "DRUID" => self.playerClass = ClassEnum::Druid,
+                                "HUNTER" => self.playerClass = ClassEnum::Hunter,
+                                "MAGE" => self.playerClass = ClassEnum::Mage,
+                                "PALADIN" => self.playerClass = ClassEnum::Paladin,
+                                "PRIEST" => self.playerClass = ClassEnum::Priest,
+                                "ROGUE" => self.playerClass = ClassEnum::Rogue,
+                                "SHAMAN" => self.playerClass = ClassEnum::Shaman,
+                                "WARLOCK" => self.playerClass = ClassEnum::Warlock,
+                                "WARRIOR" => self.playerClass = ClassEnum::Warrior,
+                                _ => println!("Unknown playerClass found!: {}", s),
+                            }
+                        }
                         _ => println!("Should be string but isn't"),
                     }
                 }
                 "cardClass" => {
                     match *value {
-                        Value::String(ref s) => {self.cardClass = s.clone();},
-                        _ => println!("Should be string but isn't"),
-                    }
-                }
-                "text" => {
-                    match *value {
-                        Value::String(ref s) => {self.text = s.clone();},
-                        _ => println!("Should be string but isn't"),
-                    }
-                }
-                "set" => {
-                    match *value {
-                        Value::String(ref s) => {self.set = s.clone();},
-                        _ => println!("Should be string but isn't"),
-                    }
-                }
-                "artist" => {
-                    match *value {
-                        Value::String(ref s) => {self.artist = s.clone();},
-                        _ => println!("Should be string but isn't"),
-                    }
-                }
-                "type" => {
-                    match *value {
-                        Value::String(ref s) => {self.theType = s.clone();},
-                        _ => println!("Should be string but isn't"),
-                    }
-                }
-                "faction" => {
-                    match *value {
-                        Value::String(ref s) => {self.faction = s.clone();},
-                        _ => println!("Should be string but isn't"),
-                    }
-                }
-                "flavor" => {
-                    match *value {
-                        Value::String(ref s) => {self.flavor = s.clone();},
-                        _ => println!("Should be string but isn't"),
-                    }
-                }
-                "howToEarn" => {
-                    match *value {
-                        Value::String(ref s) => {self.howToEarn = s.clone();},
-                        _ => println!("Should be string but isn't"),
-                    }
-                }
-                "howToEarnGolden" => {
-                    match *value {
-                        Value::String(ref s) => {self.howToEarnGolden = s.clone();},
-                        _ => println!("Should be string but isn't"),
-                    }
-                }
-                "targetingArrowText" => {
-                    match *value {
-                        Value::String(ref s) => {self.targetingArrowText = s.clone();},
-                        _ => println!("Should be string but isn't"),
-                    }
-                }
-                "race" => {
-                    match *value {
-                        Value::String(ref s) => {self.race = s.clone();},
+                        Value::String(ref s) => {
+                            match s.as_ref() {
+                                "NEUTRAL" => self.cardClass = ClassEnum::Neutral,
+                                "DRUID" => self.cardClass = ClassEnum::Druid,
+                                "HUNTER" => self.cardClass = ClassEnum::Hunter,
+                                "MAGE" => self.cardClass = ClassEnum::Mage,
+                                "PALADIN" => self.cardClass = ClassEnum::Paladin,
+                                "PRIEST" => self.cardClass = ClassEnum::Priest,
+                                "ROGUE" => self.cardClass = ClassEnum::Rogue,
+                                "SHAMAN" => self.cardClass = ClassEnum::Shaman,
+                                "WARLOCK" => self.cardClass = ClassEnum::Warlock,
+                                "WARRIOR" => self.cardClass = ClassEnum::Warrior,
+                                _ => println!("Unknown cardClass found!: {}", s),
+                            }
+                        }
                         _ => println!("Should be string but isn't"),
                     }
                 }
                 "rarity" => {
                     match *value {
-                        Value::String(ref s) => {self.rarity = s.clone();},
+                        Value::String(ref s) => {
+                            match s.as_ref() {
+                                "COMMON" => self.rarity = RarityEnum::Common,
+                                "RARE" => self.rarity = RarityEnum::Rare,
+                                "EPIC" => self.rarity = RarityEnum::Epic,
+                                "LEGENDARY" => self.rarity = RarityEnum::Legendary,
+                                "FREE" => self.rarity = RarityEnum::Free,
+                                _ => println!("Unknown rarity found!: {}", s),
+                            }
+                        }
+                        _ => println!("Should be string but isn't"),
+                    }
+                }
+                "type" => {
+                    match *value {
+                        Value::String(ref s) => {
+                            match s.as_ref() {
+                                "MINION" => self.theType = TypeEnum::Minion,
+                                "WEAPON" => self.theType = TypeEnum::Weapon,
+                                "SPELL" => self.theType = TypeEnum::Spell,
+                                "HERO" => self.theType = TypeEnum::Hero,
+                                _ => println!("Unknown type found!: {}", s),
+                            }
+                        }
+                        _ => println!("Should be string but isn't"),
+                    }
+                }
+                "faction" => {
+                    match *value {
+                        Value::String(ref s) => {
+                            match s.as_ref() {
+                                "ALLIANCE" => self.faction = FactionEnum::Alliance,
+                                "HORDE" => self.faction = FactionEnum::Horde,
+                                _ => println!("Unknown faction found!: {}", s),
+                            }
+                        }
+                        _ => println!("Should be string but isn't"),
+                    }
+                }
+                "artist" => {
+                    match *value {
+                        Value::String(ref s) => {
+                            self.artist = s.clone();
+                        }
+                        _ => println!("Should be string but isn't"),
+                    }
+                }
+                "text" => {
+                    match *value {
+                        Value::String(ref s) => {
+                            self.text = s.clone();
+                        }
+                        _ => println!("Should be string but isn't"),
+                    }
+                }
+                "set" => {
+                    match *value {
+                        Value::String(ref s) => {
+                            self.set = s.clone();
+                        }
+                        _ => println!("Should be string but isn't"),
+                    }
+                }
+                "artist" => {
+                    match *value {
+                        Value::String(ref s) => {
+                            self.artist = s.clone();
+                        }
+                        _ => println!("Should be string but isn't"),
+                    }
+                }
+                "flavor" => {
+                    match *value {
+                        Value::String(ref s) => {
+                            self.flavor = s.clone();
+                        }
+                        _ => println!("Should be string but isn't"),
+                    }
+                }
+                "howToEarn" => {
+                    match *value {
+                        Value::String(ref s) => {
+                            self.howToEarn = s.clone();
+                        }
+                        _ => println!("Should be string but isn't"),
+                    }
+                }
+                "howToEarnGolden" => {
+                    match *value {
+                        Value::String(ref s) => {
+                            self.howToEarnGolden = s.clone();
+                        }
+                        _ => println!("Should be string but isn't"),
+                    }
+                }
+                "targetingArrowText" => {
+                    match *value {
+                        Value::String(ref s) => {
+                            self.targetingArrowText = s.clone();
+                        }
+                        _ => println!("Should be string but isn't"),
+                    }
+                }
+                "race" => {
+                    match *value {
+                        Value::String(ref s) => {
+                            self.race = s.clone();
+                        }
                         _ => println!("Should be string but isn't"),
                     }
                 }
@@ -142,9 +252,9 @@ impl Card {
                         Value::Number(ref n) => {
                             match n.as_i64() {
                                 Some(num) => self.attack = num,
-                                None => println!("Should be an i64 but isn't")
+                                None => println!("Should be an i64 but isn't"),
                             }
-                        },
+                        }
                         _ => println!("Should be a number but isn't"),
                     }
                 }
@@ -153,9 +263,9 @@ impl Card {
                         Value::Number(ref n) => {
                             match n.as_i64() {
                                 Some(num) => self.cost = num,
-                                None => println!("Should be an i64 but isn't")
+                                None => println!("Should be an i64 but isn't"),
                             }
-                        },
+                        }
                         _ => println!("Should be a number but isn't"),
                     }
                 }
@@ -164,9 +274,9 @@ impl Card {
                         Value::Number(ref n) => {
                             match n.as_i64() {
                                 Some(num) => self.dbfId = num,
-                                None => println!("Should be an i64 but isn't")
+                                None => println!("Should be an i64 but isn't"),
                             }
-                        },
+                        }
                         _ => println!("Should be a number but isn't"),
                     }
                 }
@@ -175,9 +285,9 @@ impl Card {
                         Value::Number(ref n) => {
                             match n.as_i64() {
                                 Some(num) => self.health = num,
-                                None => println!("Should be an i64 but isn't")
+                                None => println!("Should be an i64 but isn't"),
                             }
-                        },
+                        }
                         _ => println!("Should be a number but isn't"),
                     }
                 }
@@ -186,9 +296,9 @@ impl Card {
                         Value::Number(ref n) => {
                             match n.as_i64() {
                                 Some(num) => self.overload = num,
-                                None => println!("Should be an i64 but isn't")
+                                None => println!("Should be an i64 but isn't"),
                             }
-                        },
+                        }
                         _ => println!("Should be a number but isn't"),
                     }
                 }
@@ -197,9 +307,9 @@ impl Card {
                         Value::Number(ref n) => {
                             match n.as_i64() {
                                 Some(num) => self.spellDamage = num,
-                                None => println!("Should be an i64 but isn't")
+                                None => println!("Should be an i64 but isn't"),
                             }
-                        },
+                        }
                         _ => println!("Should be a number but isn't"),
                     }
                 }
@@ -208,9 +318,9 @@ impl Card {
                         Value::Number(ref n) => {
                             match n.as_i64() {
                                 Some(num) => self.durability = num,
-                                None => println!("Should be an i64 but isn't")
+                                None => println!("Should be an i64 but isn't"),
                             }
-                        },
+                        }
                         _ => println!("Should be a number but isn't"),
                     }
                 }
@@ -226,8 +336,7 @@ impl Card {
                         _ => println!("Should be string but isn't"),
                     }
                 }
-
-                _ => println!("found unknown key: {}", key)
+                _ => println!("found unknown key: {}", key),
             }
         }
     }
@@ -270,14 +379,14 @@ fn parse_card(value: &Value) -> Result<Card, String> {
         name: "".into(),
         id: "".into(),
         json: "".into(),
-        playerClass: "".into(),
+        playerClass: ClassEnum::Unknown,
+        cardClass: ClassEnum::Unknown,
+        rarity: RarityEnum::Unknown,
+        theType: TypeEnum::Unknown,
+        faction: FactionEnum::Unknown,
         artist: "".into(),
-        cardClass:  "".into(),
-        rarity: "".into(),
         text: "".into(),
         set: "".into(),
-        theType: "".into(),
-        faction: "".into(),
         flavor: "".into(),
         howToEarnGolden: "".into(),
         targetingArrowText: "".into(),
