@@ -7,7 +7,7 @@ use std::fs::File;
 
 struct Card {
     name: String,
-    json: Value,
+    json: String,
 }
 
 fn load_json_from_file(file_relative_path: &str) -> io::Result<String> {
@@ -24,6 +24,98 @@ fn parse_json_to_values(buffer: &str) -> Result<Value, String> {
     }
 }
 
+fn parse_values_to_cards(value: &Value) -> Result<Vec<Card>, String> {
+    let mut cards = Vec::new();
+    match *value {
+        //outermost value must be an array
+        Value::Array(ref a) => {
+            for val in a {
+                let result = parse_card(val);
+                match result {
+                    Ok(card) => cards.push(card),
+                    Err(e) => println!("Error: {}", e),
+                }
+            }
+        }
+        _ => println!("Expected an array"),
+    }
+    Ok(cards)
+}
+
+fn parse_card(value: &Value) -> Result<Card, String> {
+    let mut card = Card {
+        name: "".into(),
+        json: "".into(),
+    };
+    match *value {
+        Value::Object(ref o) => {
+            let pretty_text_result = serde_json::to_string_pretty(&o);
+            match pretty_text_result {
+                Ok(pretty_text) => {
+                    card.json = pretty_text;
+                }
+                Err(e) => println!("Couldn't pretty print card text: {}", e),
+            }
+        }
+        _ => println!("Expected an object"),
+    }
+    Ok(card)
+}
+
+fn main() {
+    let json_as_string_result = load_json_from_file("data/cards.collectible.json");
+    match json_as_string_result {
+        Ok(json_as_string) => {
+            let json_as_value_result = parse_json_to_values(&json_as_string);
+            match json_as_value_result {
+                Ok(json_as_value) => {
+                    let cards_result = parse_values_to_cards(&json_as_value);
+                    match cards_result {
+                        Ok(cards) => {
+                            println!("Loaded {} cards", cards.len());
+                            let card = &cards[0];
+                            println!("Sample card: {} {}", card.name, card.json);
+                        }
+                        Err(e) => println!("Error: {}", e),
+                    }
+                }
+                Err(e) => println!("Couldn't parse file to Values: {}", e),
+            }
+        }
+        Err(e) => println!("Error: Couldn't load file: {}", e),
+    }
+}
+
+/////////////////////////////////////////////////////////////
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parse_json_to_values_empty_string_is_error() {
+        let result = parse_json_to_values("");
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn parse_json_to_values_simple_json_is_valid() {
+        let data = r#"{
+                    "name": "John Doe",
+                    "age": 43,
+                    "phones": [
+                      "+44 1234567",
+                      "+44 2345678"
+                    ]
+                  }"#;
+        let result = parse_json_to_values(&data);
+        assert!(result.is_ok());
+    }
+}
+
+
+
+/*
 fn parse_values_to_cards(value: &Value) -> Result<Vec<Card>, String> {
     let cards = Vec::new();
     match *value {
@@ -61,51 +153,4 @@ fn parse_values_to_cards(value: &Value) -> Result<Vec<Card>, String> {
     }
     Ok(cards)
 }
-
-fn main() {
-    let json_as_string_result = load_json_from_file("data/cards.collectible.json");
-    match json_as_string_result {
-        Ok(json_as_string) => {
-            let json_as_value_result = parse_json_to_values(&json_as_string);
-            match json_as_value_result {
-                Ok(json_as_value) => {
-//                    let pretty_result = serde_json::to_string_pretty(&json_as_value);
-//                    match pretty_result {
-//                        Ok(v) => println!("Data is: {}", v),
-//                        Err(e) => println!("Couldn't pretty print: {}", e),
-//                    }
-                    let cards = parse_values_to_cards(&json_as_value);
-                }
-                Err(e) => println!("Couldn't parse file to Values: {}", e),
-            }
-        }
-        Err(e) => println!("Error: Couldn't load file: {}", e),
-    }
-}
-
-/////////////////////////////////////////////////////////////
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn parse_json_to_values_empty_string_is_error() {
-        let result = parse_json_to_values("");
-        assert!(result.is_err());
-    }
-
-    #[test]
-    fn parse_json_to_values_simple_json_is_valid() {
-        let data = r#"{
-                    "name": "John Doe",
-                    "age": 43,
-                    "phones": [
-                      "+44 1234567",
-                      "+44 2345678"
-                    ]
-                  }"#;
-        let result = parse_json_to_values(&data);
-        assert!(result.is_ok());
-    }
-}
+*/
